@@ -24,7 +24,6 @@ export default function App() {
 
   // Refs to DOM Nodes
   const resetBtnRef = useRef<HTMLButtonElement | null>(null);
-  const fallbackFocusRef = useRef<HTMLDivElement | null>(null);
 
   // Refs for correct caret rendering
   const caretRef = useRef<HTMLDivElement | null>(null);
@@ -46,64 +45,75 @@ export default function App() {
     const handleKeyDown = (evt: KeyboardEvent) => {
       if (evt.code.startsWith("Key")) {
         const key = evt.code.replace("Key", "").toLowerCase();
-
-        setTypedChars((prev) => {
-          const newTypedChars = prev.map((word, idx) =>
-            cursorRef.current.word === idx ? [...word, key] : [...word],
-          );
-
-          typedCharsRef.current = newTypedChars;
-          setExtraChars(calcExtraChars(typedCharsRef.current));
-          return newTypedChars;
-        });
-
-        setCursor((prev) => {
-          const newCursor = {
-            ...prev,
-            char: prev.char + 1,
-          };
-
-          cursorRef.current = newCursor;
-          return newCursor;
-        });
+        handleCharPress(key);
       }
 
       if (evt.code === "Space") {
-        setCursor((prev) => {
-          const newCursor = {
-            word: Math.min(prev.word + 1, words.length - 1),
-            char: 0,
-          };
-
-          cursorRef.current = newCursor;
-          return newCursor;
-        });
+        handleSpacePress();
       }
 
       if (evt.code === "Backspace") {
-        setTypedChars((prev) => {
-          const newTypedChars = prev.map((word, idx) =>
-            cursorRef.current.word === idx
-              ? [...word.filter((_, idx) => cursorRef.current.char - 1 !== idx)]
-              : [...word],
-          );
-
-          typedCharsRef.current = newTypedChars;
-          setExtraChars(calcExtraChars(newTypedChars));
-
-          return newTypedChars;
-        });
-
-        setCursor((prev) => {
-          const newCursor = {
-            ...prev,
-            char: Math.max(prev.char - 1, 0),
-          };
-
-          cursorRef.current = newCursor;
-          return newCursor;
-        });
+        handleBackspacePress();
       }
+    };
+
+    const handleCharPress = (key: string) => {
+      setTypedChars((prev) => {
+        const newTypedChars = prev.map((word, idx) =>
+          cursorRef.current.word === idx ? [...word, key] : [...word],
+        );
+
+        typedCharsRef.current = newTypedChars;
+        setExtraChars(getExtraChars(typedCharsRef.current));
+        return newTypedChars;
+      });
+
+      setCursor((prev) => {
+        const newCursor = {
+          ...prev,
+          char: prev.char + 1,
+        };
+
+        cursorRef.current = newCursor;
+        return newCursor;
+      });
+    };
+
+    const handleSpacePress = () => {
+      setCursor((prev) => {
+        const newCursor = {
+          word: Math.min(prev.word + 1, words.length - 1),
+          char: 0,
+        };
+
+        cursorRef.current = newCursor;
+        return newCursor;
+      });
+    };
+
+    const handleBackspacePress = () => {
+      setTypedChars((prev) => {
+        const newTypedChars = prev.map((word, idx) =>
+          cursorRef.current.word === idx
+            ? [...word.filter((_, idx) => cursorRef.current.char - 1 !== idx)]
+            : [...word],
+        );
+
+        typedCharsRef.current = newTypedChars;
+        setExtraChars(getExtraChars(newTypedChars));
+
+        return newTypedChars;
+      });
+
+      setCursor((prev) => {
+        const newCursor = {
+          ...prev,
+          char: Math.max(prev.char - 1, 0),
+        };
+
+        cursorRef.current = newCursor;
+        return newCursor;
+      });
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -122,18 +132,18 @@ export default function App() {
     cursorRef.current = initialCursor;
 
     resetBtnRef.current?.blur();
-    fallbackFocusRef.current?.focus();
+    wrapperRef.current?.focus();
   };
 
   // Utility
-  const calcExtraChars = (typed: string[][]) => {
+  const getExtraChars = (typed: string[][]) => {
     return typed.map((typedWord, idx) => {
       const wordLen = words[idx].length;
       return typedWord.length > wordLen ? typedWord.slice(wordLen) : [];
     });
   };
 
-  const calcCaretPosition = () => {
+  const getCaretPosition = () => {
     // const offset = caretRef.current?.offsetWidth || 0;
     const pos = `translate(${caretPos.x}px, ${caretPos.y}px)`;
 
@@ -143,15 +153,16 @@ export default function App() {
   return (
     <AppWrapper>
       <Header />
-      <main ref={fallbackFocusRef} tabIndex={-1} className="focus:outline-none">
+      <main>
         <div
           ref={wrapperRef}
-          className="relative flex flex-wrap w-[80ch] text-4xl"
+          tabIndex={-1}
+          className="relative flex flex-wrap w-[80ch] text-4xl focus:outline-none"
         >
           {words.map((word, idx) => (
             <Word
               key={`${word}-${idx}`}
-              caretRef={cursorRef.current.word === idx ? caretRef : null}
+              ref={cursor.word === idx ? caretRef : null}
               word={word}
               wordIdx={idx}
               cursor={cursor}
@@ -160,7 +171,7 @@ export default function App() {
             />
           ))}
           <div
-            style={calcCaretPosition()}
+            style={getCaretPosition()}
             className={`absolute w-[3px] h-[40px] left-0 transition blink-animation`}
           ></div>
         </div>

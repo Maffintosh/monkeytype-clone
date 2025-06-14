@@ -1,5 +1,6 @@
-import type { Cursor } from "../lib/types/types";
+import { forwardRef } from "react";
 import { words } from "../lib/words";
+import type { Cursor } from "../lib/types/types";
 import Character from "./Character";
 
 interface WordProps {
@@ -8,17 +9,12 @@ interface WordProps {
   cursor: Cursor;
   typedChars: string[][];
   extraChars: string;
-  caretRef: React.RefObject<HTMLDivElement | null> | null;
 }
 
-export default function Word({
-  word,
-  wordIdx,
-  cursor,
-  typedChars,
-  extraChars,
-  caretRef,
-}: WordProps) {
+export default forwardRef<HTMLDivElement, WordProps>(function Word(
+  { word, wordIdx, cursor, typedChars, extraChars },
+  ref,
+) {
   return (
     <div className="flex p-2">
       {[...word, ...extraChars].map((char, idx) => {
@@ -31,7 +27,7 @@ export default function Word({
         return (
           <Character
             key={`${char}-${idx}`}
-            ref={isExtra ? caretRef : isCursor ? caretRef : null}
+            ref={isExtra || isCursor ? ref : null}
             char={char}
             wordIdx={wordIdx}
             charIdx={idx}
@@ -42,4 +38,4 @@ export default function Word({
       })}
     </div>
   );
-}
+});
