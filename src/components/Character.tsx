@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
 
 interface CharacterProps {
   char: string;
@@ -8,13 +8,10 @@ interface CharacterProps {
   isExtraChar: boolean;
 }
 
-export default function Character({
-  char,
-  wordIdx,
-  charIdx,
-  typedChars,
-  isExtraChar,
-}: CharacterProps) {
+export default forwardRef<HTMLDivElement, CharacterProps>(function Character(
+  { char, wordIdx, charIdx, typedChars, isExtraChar },
+  ref,
+) {
   const [isTyped, setIsTyped] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
 
@@ -26,9 +23,10 @@ export default function Character({
 
   return (
     <div
-      className={`${isTyped ? (isCorrect ? "" : "text-red-400") : "opacity-50"} withoutRef`}
+      ref={ref}
+      className={`${isTyped ? (isCorrect ? "" : "text-red-400") : "opacity-50"} withRef`}
     >
       {char}
     </div>
   );
-}
+});

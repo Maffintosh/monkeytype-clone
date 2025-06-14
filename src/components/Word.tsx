@@ -1,45 +1,45 @@
-import { forwardRef } from "react";
 import type { Cursor } from "../lib/types/types";
-import Character from "./Character";
 import { words } from "../lib/words";
-import CharacterWithRef from "./CharacterWithRef";
+import Character from "./Character";
 
 interface WordProps {
   word: string;
   wordIdx: number;
   cursor: Cursor;
   typedChars: string[][];
-  extraChars: string[];
+  extraChars: string;
+  caretRef: React.RefObject<HTMLDivElement | null> | null;
 }
 
-export default forwardRef<HTMLDivElement, WordProps>(function Word(
-  { word, wordIdx, cursor, typedChars, extraChars },
-  ref,
-) {
+export default function Word({
+  word,
+  wordIdx,
+  cursor,
+  typedChars,
+  extraChars,
+  caretRef,
+}: WordProps) {
   return (
     <div className="flex p-2">
-      {[...word, ...extraChars].map((char, idx) =>
-        cursor.word === wordIdx && cursor.char === idx ? (
-          <CharacterWithRef
-            key={`${char}-${idx}`}
-            ref={ref}
-            char={char}
-            wordIdx={wordIdx}
-            charIdx={idx}
-            typedChars={typedChars}
-            isExtraChar={idx > words[wordIdx].length - 1}
-          />
-        ) : (
+      {[...word, ...extraChars].map((char, idx) => {
+        const isCursor = cursor.word === wordIdx && cursor.char === idx;
+        const isExtra =
+          extraChars.length > 0 &&
+          cursor.word === wordIdx &&
+          cursor.char - 1 === idx;
+
+        return (
           <Character
             key={`${char}-${idx}`}
+            ref={isExtra ? caretRef : isCursor ? caretRef : null}
             char={char}
             wordIdx={wordIdx}
             charIdx={idx}
             typedChars={typedChars}
             isExtraChar={idx > words[wordIdx].length - 1}
           />
-        ),
-      )}
+        );
+      })}
     </div>
   );
-});
+}
