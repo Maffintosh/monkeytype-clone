@@ -6,6 +6,8 @@ import Footer from "./components/Footer";
 import Header from "./components/Header";
 import type { Cursor } from "./lib/types/types";
 import { words } from "./lib/words";
+import { useKeyboardEvent } from "./lib/hooks/useKeyboardEvent";
+import { FaGlobe } from "react-icons/fa";
 
 export default function App() {
   // Initial state
@@ -41,87 +43,13 @@ export default function App() {
     });
   }, [cursor]);
 
-  useEffect(() => {
-    const handleKeyDown = (evt: KeyboardEvent) => {
-      if (evt.code.startsWith("Key")) {
-        const key = evt.code.replace("Key", "").toLowerCase();
-        handleCharPress(key);
-      }
-
-      if (evt.code === "Space") {
-        handleSpacePress();
-      }
-
-      if (evt.code === "Backspace") {
-        handleBackspacePress();
-      }
-    };
-
-    const handleCharPress = (key: string) => {
-      setTypedChars((prev) => {
-        const newTypedChars = prev.map((word, idx) =>
-          cursorRef.current.word === idx ? [...word, key] : [...word],
-        );
-
-        typedCharsRef.current = newTypedChars;
-        setExtraChars(getExtraChars(typedCharsRef.current));
-        return newTypedChars;
-      });
-
-      setCursor((prev) => {
-        const newCursor = {
-          ...prev,
-          char: prev.char + 1,
-        };
-
-        cursorRef.current = newCursor;
-        return newCursor;
-      });
-    };
-
-    const handleSpacePress = () => {
-      setCursor((prev) => {
-        const newCursor = {
-          word: Math.min(prev.word + 1, words.length - 1),
-          char: 0,
-        };
-
-        cursorRef.current = newCursor;
-        return newCursor;
-      });
-    };
-
-    const handleBackspacePress = () => {
-      setTypedChars((prev) => {
-        const newTypedChars = prev.map((word, idx) =>
-          cursorRef.current.word === idx
-            ? [...word.filter((_, idx) => cursorRef.current.char - 1 !== idx)]
-            : [...word],
-        );
-
-        typedCharsRef.current = newTypedChars;
-        setExtraChars(getExtraChars(newTypedChars));
-
-        return newTypedChars;
-      });
-
-      setCursor((prev) => {
-        const newCursor = {
-          ...prev,
-          char: Math.max(prev.char - 1, 0),
-        };
-
-        cursorRef.current = newCursor;
-        return newCursor;
-      });
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
+  useKeyboardEvent(
+    setTypedChars,
+    setExtraChars,
+    setCursor,
+    typedCharsRef,
+    cursorRef,
+  );
 
   // Handlers
   const handleClick = () => {
@@ -136,13 +64,6 @@ export default function App() {
   };
 
   // Utility
-  const getExtraChars = (typed: string[][]) => {
-    return typed.map((typedWord, idx) => {
-      const wordLen = words[idx].length;
-      return typedWord.length > wordLen ? typedWord.slice(wordLen) : [];
-    });
-  };
-
   const getCaretPosition = () => {
     // const offset = caretRef.current?.offsetWidth || 0;
     const pos = `translate(${caretPos.x}px, ${caretPos.y}px)`;
@@ -154,6 +75,15 @@ export default function App() {
     <AppWrapper>
       <Header />
       <main>
+        <button className="group flex items-center gap-4 w-fit mx-auto mb-5 cursor-pointer">
+          <FaGlobe
+            size={18}
+            className="group-hover:fill-violet-300 transition"
+          />
+          <span className="text-lg font-semibold group-hover:text-violet-300 transition">
+            english B2
+          </span>
+        </button>
         <div
           ref={wrapperRef}
           tabIndex={-1}
